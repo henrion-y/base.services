@@ -1,5 +1,10 @@
 package ac_automaton
 
+import (
+	"errors"
+	"sync"
+)
+
 type acNode struct {
 	fail      *acNode
 	isPattern bool
@@ -14,8 +19,11 @@ func newAcNode() *acNode {
 	}
 }
 
+// AcAutoMachine todo 看能不能减小锁的粒度提高并发能力
 type AcAutoMachine struct {
-	root *acNode
+	sync.RWMutex
+	loadEnd bool
+	root    *acNode
 }
 
 func NewAcAutoMachine() *AcAutoMachine {
@@ -24,7 +32,7 @@ func NewAcAutoMachine() *AcAutoMachine {
 	}
 }
 
-func (ac *AcAutoMachine) AddPattern(pattern string) {
+func (ac *AcAutoMachine) addPattern(pattern string) {
 	chars := []rune(pattern)
 	iter := ac.root
 	for _, c := range chars {
@@ -36,7 +44,7 @@ func (ac *AcAutoMachine) AddPattern(pattern string) {
 	iter.isPattern = true
 }
 
-func (ac *AcAutoMachine) Build() {
+func (ac *AcAutoMachine) build() {
 	var queue []*acNode
 	queue = append(queue, ac.root)
 	for len(queue) != 0 {
@@ -47,15 +55,15 @@ func (ac *AcAutoMachine) Build() {
 			if parent == ac.root {
 				child.fail = ac.root
 			} else {
-				failacNode := parent.fail
-				for failacNode != nil {
-					if _, ok := failacNode.next[char]; ok {
-						child.fail = failacNode.next[char]
+				failNode := parent.fail
+				for failNode != nil {
+					if _, ok := failNode.next[char]; ok {
+						child.fail = failNode.next[char]
 						break
 					}
-					failacNode = failacNode.fail
+					failNode = failNode.fail
 				}
-				if failacNode == nil {
+				if failNode == nil {
 					child.fail = ac.root
 				}
 			}
@@ -65,6 +73,9 @@ func (ac *AcAutoMachine) Build() {
 }
 
 func (ac *AcAutoMachine) Query(content string) (results []string) {
+	ac.RLock()
+	defer ac.RUnlock()
+
 	chars := []rune(content)
 	iter := ac.root
 	var start, end int
@@ -74,15 +85,39 @@ func (ac *AcAutoMachine) Query(content string) (results []string) {
 			iter = iter.fail
 		}
 		if _, ok = iter.next[c]; ok {
-			if iter == ac.root { // this is the first match, record the start position
+			if iter == ac.root {
 				start = i
 			}
 			iter = iter.next[c]
 			if iter.isPattern {
-				end = i // this is the end match, record one result
+				end = i
 				results = append(results, string([]rune(content)[start:end+1]))
 			}
 		}
 	}
 	return
+}
+
+func (ac *AcAutoMachine) LoadPatterns(patterns []string) error {
+	if ac.loadEnd {
+		return errors.New("LoadEnd")
+	}
+
+	for i := range patterns {
+		ac.addPattern(patterns[i])
+	}
+	return nil
+}
+
+func (ac *AcAutoMachine) StopLoad() {
+	ac.loadEnd = true
+	ac.build()
+}
+
+func (ac *AcAutoMachine) AddPatternAndBuild(pattern string) {
+	ac.Lock()
+	defer ac.Unlock()
+
+	ac.addPattern(pattern)
+	ac.build()
 }
