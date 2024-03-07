@@ -71,43 +71,44 @@ func (c *Client) GetUpToken() (string, int64, error) {
 	return c.upToken, c.upTokenExpiresAt, nil
 }
 
-func (c *Client) UploadLocalFile(localFile string, remoteFile string) (*storage.PutRet, error) {
+func (c *Client) UploadLocalFile(localFile string, remoteFile string) (storage.PutRet, error) {
+	ret := storage.PutRet{}
 	if time.Now().Unix() > c.upTokenExpiresAt {
 		_, _, err := c.GetUpToken()
 		if err != nil {
-			return nil, err
+			return ret, err
 		}
 	}
 
 	formUploader := storage.NewFormUploader(&c.cfg)
-	ret := &storage.PutRet{}
 	err := formUploader.PutFile(context.Background(), &ret, c.upToken, remoteFile, localFile, nil)
 	if err != nil {
-		return nil, err
+		return ret, err
 	}
 	return ret, nil
 }
 
-func (c *Client) ResumeUploaderFile(localFile string, remoteFile string) (*storage.PutRet, error) {
+func (c *Client) ResumeUploaderFile(localFile string, remoteFile string) (storage.PutRet, error) {
+	ret := storage.PutRet{}
 	if time.Now().Unix() > c.upTokenExpiresAt {
 		_, _, err := c.GetUpToken()
 		if err != nil {
-			return nil, err
+			return ret, err
 		}
 	}
 
 	resumeUploader := storage.NewResumeUploaderV2(&c.cfg)
-	ret := &storage.PutRet{}
+
 	recorder, err := storage.NewFileRecorder(os.TempDir())
 	if err != nil {
-		return nil, err
+		return ret, err
 	}
 	putExtra := storage.RputV2Extra{
 		Recorder: recorder,
 	}
 	err = resumeUploader.PutFile(context.Background(), &ret, c.upToken, remoteFile, localFile, &putExtra)
 	if err != nil {
-		return nil, err
+		return ret, err
 	}
 	return ret, nil
 }

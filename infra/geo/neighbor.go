@@ -13,18 +13,18 @@ type Neighbor struct {
 }
 
 // NewNeighbor transfers the raw value from GEOREDIUS to Member
-func NewNeighbor(raw reflect.Value, opts ...Option) (*Neighbor, error) {
+func NewNeighbor(raw reflect.Value, opts ...Option) (Neighbor, error) {
 	// no option, only slice of string
 	if len(opts) == 0 {
 		name, err := toString(unpackValue(raw))
-		return &Neighbor{Member: Member{Name: name}}, err
+		return Neighbor{Member: Member{Name: name}}, err
 	}
 
 	if raw.Kind() != reflect.Slice {
-		return nil, fmt.Errorf("new neighbor data fail: %v", raw.Kind())
+		return Neighbor{}, fmt.Errorf("new neighbor data fail: %v", raw.Kind())
 	}
 
-	nb := &Neighbor{}
+	nb := Neighbor{}
 
 	transformers := []func(v reflect.Value) error{
 		func(v reflect.Value) error { // name
@@ -73,7 +73,7 @@ func NewNeighbor(raw reflect.Value, opts ...Option) (*Neighbor, error) {
 		}
 		err := transformers[fi](raw.Index(i))
 		if err != nil {
-			return nil, err
+			return nb, err
 		}
 		i++
 	}

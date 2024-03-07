@@ -21,15 +21,15 @@ type CensorImageResult struct {
 	ConclusionType int  `json:"conclusionType"`
 }
 
-func (c *CensorClient) CensorImage(imageUrl string) (*censor.CensorResult, error) {
+func (c *CensorClient) CensorImage(imageUrl string) (censor.CensorResult, error) {
 	result := &CensorImageResult{}
 	data := c.ContentCensorClient.ImgCensorUrl(imageUrl, nil)
 	err := json.Unmarshal([]byte(data), result)
 	if err != nil {
-		return nil, err
+		return censor.CensorResult{}, err
 	}
 
-	censorResult := &censor.CensorResult{
+	censorResult := censor.CensorResult{
 		CensorContent: imageUrl,
 		CensorType:    censor.CensorTypeImage,
 		Suggestion:    result.Conclusion,

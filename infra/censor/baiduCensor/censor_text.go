@@ -31,15 +31,15 @@ type CensorTextResult struct {
 	ConclusionType int  `json:"conclusionType"`
 }
 
-func (c *CensorClient) CensorText(text string) (*censor.CensorResult, error) {
+func (c *CensorClient) CensorText(text string) (censor.CensorResult, error) {
 	result := &CensorTextResult{}
 	data := c.ContentCensorClient.TextCensor(text)
 	err := json.Unmarshal([]byte(data), result)
 	if err != nil {
-		return nil, err
+		return censor.CensorResult{}, err
 	}
 
-	censorResult := &censor.CensorResult{
+	censorResult := censor.CensorResult{
 		CensorContent: text,
 		CensorType:    censor.CensorTypeText,
 		Suggestion:    result.Conclusion,

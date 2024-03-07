@@ -3,11 +3,10 @@ package gorm
 import (
 	"errors"
 	"fmt"
-	"time"
-
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func NewDbProvider(config *viper.Viper) (*gorm.DB, error) {
@@ -49,15 +48,12 @@ func NewDbProvider(config *viper.Viper) (*gorm.DB, error) {
 		db,
 		charset)
 
-	ormDb, err := gorm.Open(driver, dial)
+	gormConf := &gorm.Config{}
+
+	ormDb, err := gorm.Open(mysql.Open(dial), gormConf)
 	if err != nil {
 		return nil, err
 	}
-
-	// defer db.Close()
-	ormDb.LogMode(true)
-	ormDb.DB().SetMaxIdleConns(10)
-	ormDb.DB().SetConnMaxLifetime(3 * time.Minute)
 
 	return ormDb, nil
 }

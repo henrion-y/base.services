@@ -32,7 +32,7 @@ func (s *Geo) Add(key string, data []*geo2.Member) error {
 // Pos gets the meta data by key
 // returned meta data hase the same order of names
 // leave nil for the keys have no data
-func (s *Geo) Pos(key string, names ...string) ([]*geo2.Member, error) {
+func (s *Geo) Pos(key string, names ...string) ([]geo2.Member, error) {
 	conn := s.pool.Get()
 	defer conn.Close()
 
@@ -47,7 +47,7 @@ func (s *Geo) Pos(key string, names ...string) ([]*geo2.Member, error) {
 	}
 
 	// create meta data
-	data := make([]*geo2.Member, len(r))
+	data := make([]geo2.Member, len(r))
 	for i := range r {
 		if r[i] == nil {
 		} else {
@@ -60,7 +60,7 @@ func (s *Geo) Pos(key string, names ...string) ([]*geo2.Member, error) {
 
 // RadiusByName find nearby members of member
 // the result include the name itself
-func (s *Geo) RadiusByName(key string, name string, radius int, unit string, options ...geo2.Option) ([]*geo2.Neighbor, error) {
+func (s *Geo) RadiusByName(key string, name string, radius int, unit string, options ...geo2.Option) ([]geo2.Neighbor, error) {
 	mems, err := s.Pos(key, name)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (s *Geo) RadiusByName(key string, name string, radius int, unit string, opt
 }
 
 // Radius find the neighbor with coordinate
-func (s *Geo) Radius(key string, coord geo2.Coordinate, radius int, unit string, options ...geo2.Option) ([]*geo2.Neighbor, error) {
+func (s *Geo) Radius(key string, coord geo2.Coordinate, radius int, unit string, options ...geo2.Option) ([]geo2.Neighbor, error) {
 	conn := s.pool.Get()
 	defer conn.Close()
 

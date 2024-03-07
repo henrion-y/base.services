@@ -8,10 +8,8 @@ const (
 )
 
 type Client interface {
-	CensorText(text string) (*CensorResult, error)
-	CensorImage(imgUrl string) (*CensorResult, error)
-	// CensorVideo(videoUrl string) (*CensorResult, error)
-	// CensorVoice(voiceUrl string) (*CensorResult, error)
+	CensorText(text string) (CensorResult, error)
+	CensorImage(imgUrl string) (CensorResult, error)
 }
 
 type ReviewLabel struct {
