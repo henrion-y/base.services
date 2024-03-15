@@ -15,7 +15,7 @@ import (
 
 type BaseRepository interface {
 	Create(ctx context.Context, mod Model) error
-	Update(ctx context.Context, mod Model, data map[string]interface{}, filterGroup *FilterGroup) error
+	Update(ctx context.Context, mod Model, data map[string]interface{}, filterGroup *FilterGroup) (int64, error)
 	Delete(ctx context.Context, mod Model, filterGroup *FilterGroup) error
 	Find(ctx context.Context, mod Model, result interface{}, fields []string, filterGroup *FilterGroup, sortSpecs *SortSpecs, limitSpec *LimitSpec) error
 	FindOne(ctx context.Context, mod Model, fields []string, filterGroup *FilterGroup, sortSpecs *SortSpecs) error

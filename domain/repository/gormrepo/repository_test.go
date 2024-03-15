@@ -2,6 +2,8 @@ package gormrepo
 
 import (
 	"context"
+	"github.com/henrion-y/base.services/database/gorm"
+	"github.com/spf13/viper"
 	"testing"
 	"time"
 
@@ -24,8 +26,18 @@ func (t *User) TableName() string {
 }
 
 func getDB() *_gorm.DB {
-	// todo 数据库初始化
-	panic("数据库初始化")
+	v := viper.New()
+	v.Set("database.Driver", "mysql")
+	v.Set("database.User", "root")
+	v.Set("database.Password", "123456")
+	v.Set("database.Host", "127.0.0.1:3306")
+	v.Set("database.Db", "base_test")
+	v.Set("database.Charset", "utf8")
+	db, err := gorm.NewDbProvider(v)
+	if err != nil {
+		panic(err)
+	}
+	return db
 }
 
 func TestBaseRepository_Create(t *testing.T) {
@@ -104,8 +116,8 @@ func TestBaseRepository_Find2(t *testing.T) {
 	var list []User
 	filterGroup := repository.NewFilterGroup().Equals("name", "张飞").GreaterThanOrEqual("age", 10).
 		And(
-			repository.NewFilterGroup().GreaterThan("id", 1),
-			repository.NewFilterGroup().In("age", []int{18, 19, 20, 21, 22, 23, 24, 25}),
+			repository.NewFilterGroup().GreaterThan("id", 0),
+			repository.NewFilterGroup().In("age", []int{18, 19, 20, 21, 22, 23, 24, 25, 28}),
 		)
 	sortSpecs := repository.NewSortSpecs("age", repository.SortType_DESC).Add("id", repository.SortType_ASC)
 	limitSpec := repository.NewLimitSpec(0, 20)
@@ -153,10 +165,11 @@ func TestBaseRepository_Update(t *testing.T) {
 		"age": 19,
 	}
 
-	err := repo.Update(context.Background(), &mod, data, repository.NewFilterGroup().AddFilter("name", repository.FilterType_EQ, "张飞"))
+	rowCount, err := repo.Update(context.Background(), &mod, data, repository.NewFilterGroup().AddFilter("name", repository.FilterType_EQ, "张飞"))
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(rowCount)
 }
 
 func TestBaseRepository_Delete(t *testing.T) {

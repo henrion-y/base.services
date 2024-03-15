@@ -2,8 +2,10 @@ package mongorepo
 
 import (
 	"context"
+	"github.com/henrion-y/base.services/database/mongo"
 	"github.com/henrion-y/base.services/domain/repository"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/spf13/viper"
+	_mongo "go.mongodb.org/mongo-driver/mongo"
 	"testing"
 	"time"
 )
@@ -17,9 +19,18 @@ type User struct {
 	Dtime *time.Time `json:"dtime" gorm:"dtime" bson:"dtime"`
 }
 
-func getDb() *mongo.Database {
-	// todo 数据库初始化
-	panic("数据库初始化")
+func getDb() *_mongo.Database {
+	v := viper.New()
+	v.Set("mongo.Hosts", "127.0.0.1:27017")
+	v.Set("mongo.AuthSource", "")
+	v.Set("mongo.DB", "test_project")
+	v.Set("mongo.Password", "")
+	v.Set("mongo.User", "")
+	mongoDb, err := mongo.NewDbProvider(v)
+	if err != nil {
+		panic(err)
+	}
+	return mongoDb
 }
 
 func (t User) TableName() string {
@@ -135,10 +146,11 @@ func TestBaseRepository_Update(t *testing.T) {
 		"age": 19,
 	}
 
-	err := repo.Update(context.Background(), &mod, data, repository.NewFilterGroup().AddFilter("name", repository.FilterType_EQ, "张飞"))
+	rowCount, err := repo.Update(context.Background(), &mod, data, repository.NewFilterGroup().AddFilter("name", repository.FilterType_EQ, "张三"))
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(rowCount)
 }
 
 func TestBaseRepository_Delete(t *testing.T) {

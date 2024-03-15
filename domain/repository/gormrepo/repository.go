@@ -25,18 +25,20 @@ func (r *gormRepository) Create(ctx context.Context, mod repository.Model) error
 	return err
 }
 
-func (r *gormRepository) Update(ctx context.Context, mod repository.Model, data map[string]interface{}, filterGroup *repository.FilterGroup) error {
+func (r *gormRepository) Update(ctx context.Context, mod repository.Model, data map[string]interface{}, filterGroup *repository.FilterGroup) (int64, error) {
 	mysqlConn := r.Db.Table(mod.TableName())
 
 	if filterGroup != nil {
 		mysqlConn = filterGroup.BuildToMysql(mysqlConn)
 	}
 
-	err := mysqlConn.Updates(data).Error
+	tx := mysqlConn.Updates(data)
+	err := tx.Error
 	if err != nil {
 		zlog.Error("gormRepo.Update", zap.Any("mod", mod), zap.Any("data", data), zap.Any("filterGroup", filterGroup), zap.Error(err))
 	}
-	return err
+
+	return tx.RowsAffected, err
 }
 
 func (r *gormRepository) Delete(ctx context.Context, mod repository.Model, filterGroup *repository.FilterGroup) error {

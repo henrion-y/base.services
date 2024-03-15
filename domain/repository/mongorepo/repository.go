@@ -30,7 +30,8 @@ func (r *mongoRepository) Create(ctx context.Context, mod repository.Model) erro
 	return err
 }
 
-func (r *mongoRepository) Update(ctx context.Context, mod repository.Model, data map[string]interface{}, filterGroup *repository.FilterGroup) error {
+func (r *mongoRepository) Update(ctx context.Context, mod repository.Model, data map[string]interface{},
+	filterGroup *repository.FilterGroup) (int64, error) {
 	collection := r.Db.Collection(mod.TableName())
 
 	update := bson.D{}
@@ -43,14 +44,14 @@ func (r *mongoRepository) Update(ctx context.Context, mod repository.Model, data
 		filter = filterGroup.BuildToMongo()
 	}
 
-	_, err := collection.UpdateMany(ctx, filter, update)
+	updateResult, err := collection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		zlog.Error("mongoRepo.Update", zap.Any("mod", mod),
 			zap.Any("data", data),
 			zap.Any("filterGroup", filterGroup),
 			zap.Error(err))
 	}
-	return err
+	return updateResult.ModifiedCount, err
 }
 
 func (r *mongoRepository) Delete(ctx context.Context, mod repository.Model, filterGroup *repository.FilterGroup) error {
