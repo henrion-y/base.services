@@ -16,7 +16,7 @@ func TestJWTService(t *testing.T) {
 	}
 
 	claims := Claims{
-		JwtUserInfo: JwtUserInfo{UserId: "1234"},
+		JwtUserInfo: JwtUserInfo{UserId: 1213},
 	}
 	token, err := jwtService.CreateToken(&claims)
 	if err != nil {
