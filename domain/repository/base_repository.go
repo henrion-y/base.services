@@ -31,16 +31,17 @@ type Model interface {
 type FilterType string
 
 const (
-	FilterType_EQ     FilterType = "EQ"     //相等
-	FilterType_NE     FilterType = "NE"     //不相等
-	FilterType_GT     FilterType = "GT"     //大于
-	FilterType_GTE    FilterType = "GTE"    // 大于等于
-	FilterType_LT     FilterType = "LT"     //小于
-	FilterType_LTE    FilterType = "LTE"    //小于等于
-	FilterType_IN     FilterType = "IN"     //在什么范围内
-	FilterType_NOT_IN FilterType = "NOT_IN" //不在什么范围内
-	FilterType_LIKE   FilterType = "LIKE"   //like
-
+	FilterType_EQ          FilterType = "EQ"          //相等
+	FilterType_NE          FilterType = "NE"          //不相等
+	FilterType_GT          FilterType = "GT"          //大于
+	FilterType_GTE         FilterType = "GTE"         // 大于等于
+	FilterType_LT          FilterType = "LT"          //小于
+	FilterType_LTE         FilterType = "LTE"         //小于等于
+	FilterType_IN          FilterType = "IN"          //在什么范围内
+	FilterType_NOT_IN      FilterType = "NOT_IN"      //不在什么范围内
+	FilterType_LIKE        FilterType = "LIKE"        //like
+	FilterType_IS_NULL     FilterType = "IS_NULL"     //为空
+	FilterType_IS_NOT_NULL FilterType = "IS_NOT_NULL" //非空
 )
 
 type FilterLogic string
@@ -107,6 +108,16 @@ func (g *FilterGroup) NotIn(column string, values interface{}) *FilterGroup {
 	return g.AddFilter(column, FilterType_NOT_IN, values)
 }
 
+// IsNull 添加一个在为空的过滤条件
+func (g *FilterGroup) IsNull(column string) *FilterGroup {
+	return g.AddFilter(column, FilterType_IS_NULL, nil)
+}
+
+// IsNotNull 添加一个在为空的过滤条件
+func (g *FilterGroup) IsNotNull(column string) *FilterGroup {
+	return g.AddFilter(column, FilterType_IS_NOT_NULL, nil)
+}
+
 // Like 添加一个LIKE的过滤条件
 func (g *FilterGroup) Like(column string, pattern string) *FilterGroup {
 	return g.AddFilter(column, FilterType_LIKE, pattern)
@@ -160,8 +171,18 @@ func (g *FilterGroup) BuildToMysql(db *gorm.DB) *gorm.DB {
 	// 应用这一层的过滤条件
 	for _, filter := range g.Filters {
 		// 根据比较类型生成查询表达式
-		expression := fmt.Sprintf("%s %s ?", filter.Column, toMySQLComparator(filter.FilterType))
-		db = db.Where(expression, filter.Value)
+		switch filter.FilterType {
+		case FilterType_IS_NULL:
+			expression := fmt.Sprintf("%s IS NULL", filter.Column)
+			db = db.Where(expression)
+		case FilterType_IS_NOT_NULL:
+			expression := fmt.Sprintf("%s IS NOT NULL", filter.Column)
+			db = db.Where(expression)
+		default:
+			expression := fmt.Sprintf("%s %s ?", filter.Column, toMySQLComparator(filter.FilterType))
+			db = db.Where(expression, filter.Value)
+		}
+
 	}
 
 	// 如果有嵌套的FilterGroup，根据当前组的Logic来递归构建查询条件
@@ -196,7 +217,7 @@ func (g *FilterGroup) BuildToMongo() bson.D {
 		operator := "$eq" // 这是默认的比较操作符
 		// 此处省略了你之前的逻辑，根据具体的filter.Operator设置不同的MongoDB操作符
 		switch filter.FilterType {
-		case FilterType_NE:
+		case FilterType_NE, FilterType_IS_NOT_NULL:
 			operator = "$ne"
 		case FilterType_GT:
 			operator = "$gt"

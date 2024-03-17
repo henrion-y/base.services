@@ -78,9 +78,7 @@ func TestBaseRepository_Find(t *testing.T) {
 
 	var list []User
 	mod := User{}
-	filterGroup := repository.NewFilterGroup().Equals("name", "张飞").GreaterThanOrEqual("age", 10).
-		And(repository.NewFilterGroup().GreaterThan("id", 1), repository.NewFilterGroup().In("age", []int{18, 19, 20, 21, 22, 23, 24, 25}))
-
+	filterGroup := repository.NewFilterGroup().IsNull("dtime")
 	err := repo.Find(context.Background(), &mod, &list, nil, filterGroup, nil, nil)
 
 	if err != nil {
