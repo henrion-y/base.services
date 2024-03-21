@@ -22,22 +22,16 @@ func (m *JWTAuthMiddleware) SetClaims() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.Request.Header.Get("Authorization")
 		if authHeader == "" {
-			ctx.JSON(http.StatusForbidden, gin.H{
-				"code":    -1,
-				"message": "无权限访问，请求未携带token",
-			})
-			ctx.Abort() // 结束后续操作
+			// 未携带token，视为游客
+			ctx.Next()
 			return
 		}
 
 		// 按空格拆分
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			ctx.JSON(http.StatusOK, gin.H{
-				"code":    -1,
-				"message": "请求头中auth格式有误",
-			})
-			ctx.Abort()
+			// 请求头中auth格式有误，没解析出token，视为游客
+			ctx.Next()
 			return
 		}
 
@@ -65,7 +59,7 @@ func (m *JWTAuthMiddleware) SetClaimsAbortTourist() gin.HandlerFunc {
 			// 拦截游客
 			ctx.JSON(http.StatusOK, gin.H{
 				"code":    -1,
-				"message": "无效的Token",
+				"message": "无权限访问，请求未携带token",
 			})
 			ctx.Abort()
 			return
