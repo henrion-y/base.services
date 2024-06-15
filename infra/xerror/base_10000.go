@@ -1,5 +1,7 @@
 package xerror
 
+import "sync"
+
 // 业务错误码模块
 const (
 	ErrCustom        = 10000 // 自定义错误
@@ -33,17 +35,30 @@ type ErrorDefinition map[int]string
 
 var allErrorMap = make(ErrorDefinition)
 
+var allErrorMutex = sync.RWMutex{}
+
 func init() {
 	for k, v := range baseErrorMap {
-		allErrorMap[k] = v
+		SetAllError(k, v)
 	}
+}
+
+func SetAllError(code int, message string) {
+	allErrorMutex.Lock()
+	defer allErrorMutex.Unlock()
+
+	allErrorMap[code] = message
 }
 
 // NewXErrorByCode 通过错误码构造错误
 func NewXErrorByCode(code int) *XError {
+	allErrorMutex.RLock()
+	msg := allErrorMap[code]
+	allErrorMutex.RUnlock()
+
 	return &XError{
 		Code:    code,
-		Message: allErrorMap[code],
+		Message: msg,
 	}
 }
 
