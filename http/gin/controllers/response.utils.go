@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/henrion-y/base.services/http/errors"
+	"github.com/henrion-y/base.services/infra/xerror"
 )
 
 func ResponseError(c *gin.Context, err error) {
-	if xerr, ok := err.(*errors.XError); ok {
+	if xerr, ok := err.(*xerror.XError); ok {
 		// fmt.Errorf("%+v", xerr)
-		c.AbortWithStatusJSON(xerr.Status, xerr)
+		c.AbortWithStatusJSON(http.StatusOK, xerr)
 	} else {
-		ResponseError(c, errors.New(errors.ErrRuntime))
+		ResponseError(c, xerror.NewXErrorByCode(xerror.ErrRuntime))
 	}
 }
 
