@@ -31,7 +31,18 @@ func GetJsonIoReader(payload interface{}) (io.Reader, error) {
 }
 
 // GetHttpResponse 获取Response
-func GetHttpResponse(method string, urlStr string, reqBody io.Reader, headers map[string]string, timeout time.Duration) (*http.Response, error) {
+func GetHttpResponse(method string, urlStr string, payload interface{}, headers map[string]string, timeout time.Duration) (*http.Response, error) {
+	if headers == nil {
+		headers = map[string]string{
+			"Content-Type": "application/json",
+		}
+	}
+
+	reqBody, err := GetJsonIoReader(payload)
+	if err != nil {
+		return nil, err
+	}
+
 	// 创建自定义的 HTTP 客户端
 	client := &http.Client{
 		Timeout: timeout,
