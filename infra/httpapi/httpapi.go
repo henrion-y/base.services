@@ -30,6 +30,54 @@ func GetJsonIoReader(payload interface{}) (io.Reader, error) {
 	return reqBody, nil
 }
 
+// GetHttpResponse 获取Response
+func GetHttpResponse(method string, urlStr string, reqBody io.Reader, headers map[string]string, timeout time.Duration) (*http.Response, error) {
+	// 创建自定义的 HTTP 客户端
+	client := &http.Client{
+		Timeout: timeout,
+	}
+
+	// 创建 request
+	request, err := http.NewRequest(method, urlStr, reqBody)
+	if err != nil {
+		var reqBodyByte []byte
+		if request.Body != nil {
+			reqBodyByte, _ = ioutil.ReadAll(request.Body)
+		}
+		zlog.Error("GetHttpResponse.NewRequest",
+			zap.String("method", method),
+			zap.String("urlStr", urlStr),
+			zap.String("reqBody", string(reqBodyByte)),
+			zap.Any("headers", headers),
+			zap.Any("timeout", timeout),
+			zap.Error(err))
+		return nil, err
+	}
+
+	// 设置请求头部
+	for k, v := range headers {
+		request.Header.Set(k, v)
+	}
+
+	// 发送请求
+	response, err := client.Do(request)
+	if err != nil {
+		var reqBodyByte []byte
+		if request.Body != nil {
+			reqBodyByte, _ = ioutil.ReadAll(request.Body)
+		}
+		zlog.Error("GetHttpResponse.Do",
+			zap.String("method", method),
+			zap.String("urlStr", urlStr),
+			zap.String("reqBody", string(reqBodyByte)),
+			zap.Any("headers", headers),
+			zap.Any("timeout", timeout),
+			zap.Error(err))
+		return nil, err
+	}
+	return response, nil
+}
+
 // SendRequest 发送http请求
 func SendRequest(method string, urlStr string, reqBody io.Reader, headers map[string]string, timeout time.Duration) ([]byte, int, error) {
 	// 创建自定义的 HTTP 客户端
