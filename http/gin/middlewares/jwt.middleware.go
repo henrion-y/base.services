@@ -51,7 +51,7 @@ func (m *JWTAuthMiddleware) SetClaims() gin.HandlerFunc {
 // SetClaimsAbortTourist JWTAuthMiddleware 中间件，检查token 拦截游客
 func (m *JWTAuthMiddleware) SetClaimsAbortTourist() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		m.SetClaims()
+		m.SetClaims()(ctx)
 
 		// 解析token包含的信息
 		_, exists := ctx.Get("claims")
